@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>คลังความรู้ กยท. - การบริหารความเสี่ยง</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Phosphor Icons (For clean, modern vector icons) -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Configuration & Custom Styles -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Sarabun', 'sans-serif'],
+                    },
+                    colors: {
+                        'raot-primary': '#006837', // เขียว กยท.
+                        'raot-secondary': '#0B8043',
+                        'raot-light': '#E8F5E9',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f3f4f6; /* bg-gray-100 */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Glassmorphism Styles */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 32px 0 rgba(0, 104, 55, 0.05);
+        }
+
+        .glass-header {
+            background: linear-gradient(135deg, rgba(0, 104, 55, 0.95), rgba(11, 128, 67, 0.85));
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* 3D Icon Container Style */
+        .icon-3d-wrapper {
+            background: linear-gradient(145deg, #ffffff, #e6e6e6);
+            box-shadow: 4px 4px 10px #d1d1d1, -4px -4px 10px #ffffff;
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .icon-3d-wrapper:active {
+            box-shadow: inset 4px 4px 10px #d1d1d1, inset -4px -4px 10px #ffffff;
+        }
+
+        .icon-gradient {
+            background: -webkit-linear-gradient(#006837, #0B8043);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Hide scrollbar for category row */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Animations */
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .animate-slide-up {
+            animation: slideUp 0.3s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="text-gray-800 flex justify-center w-full min-h-screen">
+
+    <!-- Mobile App Container -->
+    <div id="app-container" class="w-full max-w-md min-h-screen relative bg-gradient-to-br from-[#e0f2e9] to-[#f5f7fa] shadow-2xl overflow-x-hidden pb-24 flex flex-col">
+
+        <!-- Header -->
+        <header class="glass-header sticky top-0 z-40 px-4 py-4 shadow-md rounded-b-3xl">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-inner flex-shrink-0">
+                        <i class="ph-fill ph-leaf text-raot-primary text-3xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-white font-bold text-lg leading-tight">คลังความรู้ กยท.</h1>
+                        <p class="text-white/80 text-xs mt-0.5">Risk & Internal Control</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <!-- Admin Upload Button (Hidden by default) -->
+                    <button id="uploadBtn" onclick="toggleUploadModal()" class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-white backdrop-blur-sm active:bg-white/30 transition hidden shadow-sm">
+                        <i class="ph ph-upload-simple text-xl"></i>
+                    </button>
+                    <!-- Admin Login Toggle -->
+                    <button id="adminToggleBtn" onclick="openAdminModal()" class="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white backdrop-blur-sm active:bg-white/30 transition border border-white/20 shadow-sm">
+                        <i class="ph ph-lock-key text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-4 space-y-6 flex flex-col">
+            
+            <!-- Search Bar -->
+            <div class="relative w-full">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="ph ph-magnifying-glass text-gray-400 text-lg"></i>
+                </div>
+                <input type="text" id="searchInput" onkeyup="filterDocuments()" placeholder="ค้นหาคู่มือ, แนวทางปฏิบัติ..." class="w-full pl-10 pr-4 py-3 rounded-2xl border-none shadow-sm focus:ring-2 focus:ring-raot-primary focus:outline-none bg-white text-sm">
+            </div>
+
+            <!-- Categories -->
+            <section>
+                <h2 class="text-sm font-bold text-gray-700 mb-3 ml-1">หมวดหมู่ (Categories)</h2>
+                <div class="flex gap-4 overflow-x-auto no-scrollbar pb-2 px-1">
+                    <!-- Category Item 1 -->
+                    <button onclick="setCategory('all')" class="flex flex-col items-center gap-2 min-w-[70px]">
+                        <div class="w-14 h-14 rounded-2xl icon-3d-wrapper flex items-center justify-center">
+                            <i class="ph-fill ph-squares-four text-2xl icon-gradient"></i>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-[10px] font-bold text-gray-700">ทั้งหมด</p>
+                            <p class="text-[9px] text-gray-500">All</p>
+                        </div>
+                    </button>
+                    <!-- Category Item 2 -->
+                    <button onclick="setCategory('risk')" class="flex flex-col items-center gap-2 min-w-[70px]">
+                        <div class="w-14 h-14 rounded-2xl icon-3d-wrapper flex items-center justify-center">
+                            <i class="ph-fill ph-shield-warning text-2xl icon-gradient"></i>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-[10px] font-bold text-gray-700">ความเสี่ยง</p>
+                            <p class="text-[9px] text-gray-500">Risk</p>
+                        </div>
+                    </button>
+                    <!-- Category Item 3 -->
+                    <button onclick="setCategory('control')" class="flex flex-col items-center gap-2 min-w-[70px]">
+                        <div class="w-14 h-14 rounded-2xl icon-3d-wrapper flex items-center justify-center">
+                            <i class="ph-fill ph-check-circle text-2xl icon-gradient"></i>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-[10px] font-bold text-gray-700">ควบคุมภายใน</p>
+                            <p class="text-[9px] text-gray-500">Control</p>
+                        </div>
+                    </button>
+                    <!-- Category Item 4 -->
+                    <button onclick="setCategory('manual')" class="flex flex-col items-center gap-2 min-w-[70px]">
+                        <div class="w-14 h-14 rounded-2xl icon-3d-wrapper flex items-center justify-center">
+                            <i class="ph-fill ph-book-open-text text-2xl icon-gradient"></i>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-[10px] font-bold text-gray-700">คู่มือ</p>
+                            <p class="text-[9px] text-gray-500">Manual</p>
+                        </div>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Document List -->
+            <section class="flex-1 pb-4">
+                <div class="flex justify-between items-end mb-3 ml-1">
+                    <h2 class="text-sm font-bold text-gray-700">เอกสารล่าสุด (Recent Docs)</h2>
+                    <span id="docCount" class="text-xs text-gray-500">0 รายการ</span>
+                </div>
+                <div id="documentList" class="space-y-3">
+                    <!-- Documents will be injected here via JS -->
+                </div>
+            </section>
+        </main>
+
+        <!-- Admin Login Modal -->
+        <div id="adminLoginModal" class="fixed inset-0 bg-black/60 z-[110] hidden flex items-center justify-center transition-opacity duration-300 opacity-0 px-4">
+            <div class="glass-card w-full max-w-[320px] p-6 rounded-3xl transform scale-95 transition-transform duration-300" id="adminLoginContent">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-raot-primary flex items-center gap-2">
+                        <i class="ph-fill ph-lock-key"></i> สำหรับผู้ดูแลระบบ
+                    </h3>
+                    <button onclick="closeAdminModal()" class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 active:scale-95">
+                        <i class="ph ph-x"></i>
+                    </button>
+                </div>
+                <p class="text-xs text-gray-500 mb-4">กรุณาใส่รหัสผ่านเพื่อจัดการคลังความรู้ (รหัส: admin)</p>
+                <input type="password" id="adminPwd" placeholder="รหัสผ่าน (Password)" onkeydown="if(event.key === 'Enter') verifyAdmin()" class="w-full border border-gray-200 rounded-xl px-4 py-3 mb-2 focus:outline-none focus:border-raot-primary focus:ring-1 focus:ring-raot-primary bg-white/70 text-sm">
+                <p id="adminError" class="text-red-500 text-xs hidden mb-4 pl-1">รหัสผ่านไม่ถูกต้อง</p>
+                <button onclick="verifyAdmin()" class="w-full bg-raot-primary text-white font-bold py-3 rounded-xl shadow-lg hover:bg-raot-secondary transition active:scale-95 mt-2 flex justify-center items-center gap-2">
+                    เข้าสู่ระบบ <i class="ph-bold ph-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Upload Modal (Simulates Backend/Admin Panel) -->
+        <div id="uploadModal" class="absolute inset-0 bg-black/60 z-[100] hidden flex-col justify-end transition-opacity duration-300 opacity-0 overflow-hidden">
+            <div id="uploadModalContent" class="bg-white w-full h-[85vh] rounded-t-3xl p-6 transform translate-y-full transition-transform duration-300 flex flex-col shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
+                
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-800">อัปโหลดเอกสารใหม่</h2>
+                        <p class="text-xs text-gray-500">Upload New Document</p>
+                    </div>
+                    <button onclick="toggleUploadModal()" class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 active:scale-95">
+                        <i class="ph ph-x text-lg"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-4 overflow-y-auto flex-1 no-scrollbar pb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อเอกสาร (Title)</label>
+                        <input type="text" id="docTitle" placeholder="เช่น คู่มือการบริหารความเสี่ยงปี 67" class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:border-raot-primary focus:ring-1 focus:ring-raot-primary text-sm">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">หมวดหมู่ (Category)</label>
+                        <select id="docCategory" class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:border-raot-primary focus:ring-1 focus:ring-raot-primary text-sm bg-white">
+                            <option value="risk">ความเสี่ยง (Risk)</option>
+                            <option value="control">ควบคุมภายใน (Control)</option>
+                            <option value="manual">คู่มือ (Manual)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ไฟล์เอกสาร (File)</label>
+                        <div class="border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center bg-gray-50 flex flex-col items-center justify-center gap-2">
+                            <i class="ph ph-cloud-arrow-up text-4xl text-raot-primary"></i>
+                            <p class="text-sm text-gray-600">คลิกเพื่อเลือกไฟล์ หรือลากไฟล์มาวาง</p>
+                            <p class="text-xs text-gray-400">รองรับ PDF, DOCX, XLSX (สูงสุด 10MB)</p>
+                            <input type="file" id="docFile" class="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx">
+                            <button onclick="document.getElementById('docFile').click()" class="mt-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm shadow-sm active:bg-gray-50">
+                                เลือกไฟล์
+                            </button>
+                            <!-- Mock File Name Display -->
+                            <p id="fileNameDisplay" class="text-xs text-raot-primary font-medium mt-2 hidden"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-gray-100 mt-auto">
+                    <button onclick="handleUpload()" class="w-full bg-raot-primary text-white font-bold py-3.5 rounded-xl shadow-lg hover:bg-raot-secondary transition active:scale-95 text-lg flex items-center justify-center gap-2">
+                        <i class="ph-bold ph-upload-simple"></i> อัปโหลดเข้าสู่ระบบ
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notification -->
+        <div id="toast" class="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-800/95 backdrop-blur-sm text-white px-5 py-3 rounded-full shadow-2xl flex items-center gap-3 z-[200] hidden whitespace-nowrap w-max max-w-[90%] transition-opacity duration-300">
+            <i class="ph-fill ph-check-circle text-green-400 text-xl flex-shrink-0"></i>
+            <span id="toastMessage" class="text-sm font-medium truncate">สำเร็จ!</span>
+        </div>
+
+    </div> <!-- End of App Container -->
+
+    <script>
+        // --- MOCK BACKEND DATA (In-Memory Database) ---
+        // Ensuring perfect JavaScript syntax (No Unexpected token errors)
+        const mockDocuments = [
+            {
+                id: 1,
+                title: "คู่มือการบริหารความเสี่ยงระดับองค์กร",
+                category: "manual",
+                date: "10 ต.ค. 2023",
+                size: "2.4 MB",
+                type: "pdf"
+            },
+            {
+                id: 2,
+                title: "รายงานการควบคุมภายใน ไตรมาส 3",
+                category: "control",
+                date: "15 พ.ย. 2023",
+                size: "1.1 MB",
+                type: "doc"
+            },
+            {
+                id: 3,
+                title: "แบบฟอร์มประเมินความเสี่ยง กยท.",
+                category: "risk",
+                date: "20 พ.ย. 2023",
+                size: "0.5 MB",
+                type: "xls"
+            },
+            {
+                id: 4,
+                title: "แนวทางปฏิบัติการควบคุมภายใน 2567",
+                category: "control",
+                date: "05 ธ.ค. 2023",
+                size: "3.2 MB",
+                type: "pdf"
+            },
+            {
+                id: 5,
+                title: "นโยบายการบริหารความเสี่ยง 2567",
+                category: "risk",
+                date: "12 ม.ค. 2024",
+                size: "1.8 MB",
+                type: "pdf"
+            }
+        ];
+
+        // Global State Variables
+        let currentFilter = 'all';
+        let searchQuery = '';
+        let isAdmin = false;
+
+        // --- ICON HELPERS ---
+        function getIconForType(type) {
+            const icons = {
+                'pdf': '<i class="ph-fill ph-file-pdf text-red-500 text-3xl"></i>',
+                'doc': '<i class="ph-fill ph-file-doc text-blue-500 text-3xl"></i>',
+                'xls': '<i class="ph-fill ph-file-xls text-green-600 text-3xl"></i>'
+            };
+            return icons[type] || '<i class="ph-fill ph-file-text text-gray-500 text-3xl"></i>';
+        }
+
+        // --- DOM MANIPULATION & RENDERING ---
+        function renderDocuments() {
+            const listContainer = document.getElementById('documentList');
+            const countDisplay = document.getElementById('docCount');
+            listContainer.innerHTML = '';
+
+            // Filter logic
+            const filteredDocs = mockDocuments.filter(doc => {
+                const matchCategory = currentFilter === 'all' || doc.category === currentFilter;
+                const matchSearch = doc.title.toLowerCase().includes(searchQuery) || doc.category.includes(searchQuery);
+                return matchCategory && matchSearch;
+            });
+
+            countDisplay.innerText = `${filteredDocs.length} รายการ`;
+
+            if (filteredDocs.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-10 text-gray-400">
+                        <i class="ph ph-folder-open text-5xl mb-2"></i>
+                        <p class="text-sm">ไม่พบเอกสารที่ค้นหา</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Render each document card
+            filteredDocs.reverse().forEach((doc, index) => {
+                const card = document.createElement('div');
+                card.className = `glass-card rounded-2xl p-4 flex items-center gap-4 cursor-pointer hover:bg-white/80 transition shadow-sm animate-slide-up`;
+                card.style.animationDelay = `${index * 0.05}s`;
+                
+                card.innerHTML = `
+                    <div class="flex-shrink-0 w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center">
+                        ${getIconForType(doc.type)}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h3 class="font-bold text-sm text-gray-800 truncate">${doc.title}</h3>
+                        <div class="flex items-center gap-3 mt-1">
+                            <span class="text-xs text-gray-500 flex items-center gap-1"><i class="ph ph-calendar-blank"></i> ${doc.date}</span>
+                            <span class="text-xs text-gray-500 flex items-center gap-1"><i class="ph ph-hard-drives"></i> ${doc.size}</span>
+                        </div>
+                    </div>
+                    <button class="w-8 h-8 rounded-full bg-raot-light text-raot-primary flex items-center justify-center flex-shrink-0 hover:bg-raot-secondary hover:text-white transition">
+                        <i class="ph-bold ph-download-simple"></i>
+                    </button>
+                `;
+                
+                // Simulate download action
+                card.onclick = (e) => {
+                    // Prevent trigger if clicking the download button directly (to avoid double trigger if we add logic there)
+                    if(!e.target.closest('button')) {
+                        showToast(`กำลังดาวน์โหลด: ${doc.title}`);
+                    }
+                };
+
+                listContainer.appendChild(card);
+            });
+            // reset array reversal so it doesn't mutate original infinitely if we didn't clone
+            filteredDocs.reverse(); 
+        }
+
+        function setCategory(category) {
+            currentFilter = category;
+            renderDocuments();
+        }
+
+        function filterDocuments() {
+            searchQuery = document.getElementById('searchInput').value.toLowerCase();
+            renderDocuments();
+        }
+
+        // --- ADMIN AUTH LOGIC ---
+        function openAdminModal() {
+            if (isAdmin) {
+                // Toggle Logout
+                isAdmin = false;
+                document.getElementById('uploadBtn').classList.add('hidden');
+                document.getElementById('adminToggleBtn').innerHTML = '<i class="ph ph-lock-key text-xl"></i>';
+                document.getElementById('adminToggleBtn').classList.replace('border-green-400', 'border-white/20');
+                showToast('ออกจากระบบ Admin เรียบร้อย');
+            } else {
+                // Open Login Modal
+                const modal = document.getElementById('adminLoginModal');
+                const content = document.getElementById('adminLoginContent');
+                
+                document.getElementById('adminPwd').value = '';
+                document.getElementById('adminError').classList.add('hidden');
+                
+                modal.classList.remove('hidden');
+                // Force reflow
+                void modal.offsetWidth;
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+                document.getElementById('adminPwd').focus();
+            }
+        }
+
+        function closeAdminModal() {
+            const modal = document.getElementById('adminLoginModal');
+            const content = document.getElementById('adminLoginContent');
+            
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function verifyAdmin() {
+            const pwd = document.getElementById('adminPwd').value;
+            if (pwd === 'admin') {
+                isAdmin = true;
+                document.getElementById('uploadBtn').classList.remove('hidden');
+                document.getElementById('adminToggleBtn').innerHTML = '<i class="ph-fill ph-lock-key-open text-xl text-green-100"></i>';
+                document.getElementById('adminToggleBtn').classList.replace('border-white/20', 'border-green-400');
+                closeAdminModal();
+                showToast('เข้าสู่ระบบ Admin สำเร็จ');
+            } else {
+                document.getElementById('adminError').classList.remove('hidden');
+            }
+        }
+
+        // --- UPLOAD LOGIC ---
+        let uploadModalOpen = false;
+
+        function toggleUploadModal() {
+            const modal = document.getElementById('uploadModal');
+            const content = document.getElementById('uploadModalContent');
+            
+            if (!uploadModalOpen) {
+                // Reset fields
+                document.getElementById('docTitle').value = '';
+                document.getElementById('docFile').value = '';
+                document.getElementById('fileNameDisplay').classList.add('hidden');
+
+                modal.classList.remove('hidden');
+                void modal.offsetWidth;
+                modal.classList.remove('opacity-0');
+                content.classList.remove('translate-y-full');
+                uploadModalOpen = true;
+            } else {
+                modal.classList.add('opacity-0');
+                content.classList.add('translate-y-full');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300);
+                uploadModalOpen = false;
+            }
+        }
+
+        // Listen for mock file selection
+        document.getElementById('docFile').addEventListener('change', function(e) {
+            if(e.target.files.length > 0) {
+                const nameDisplay = document.getElementById('fileNameDisplay');
+                nameDisplay.innerText = `ไฟล์ที่เลือก: ${e.target.files[0].name}`;
+                nameDisplay.classList.remove('hidden');
+            }
+        });
+
+        function handleUpload() {
+            const title = document.getElementById('docTitle').value;
+            const category = document.getElementById('docCategory').value;
+            const fileInput = document.getElementById('docFile');
+            
+            if (!title) {
+                showToast('กรุณาระบุชื่อเอกสาร');
+                return;
+            }
+            if (fileInput.files.length === 0) {
+                showToast('กรุณาเลือกไฟล์เอกสาร');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const ext = file.name.split('.').pop().toLowerCase();
+            let type = 'pdf'; // Default
+            if (['doc', 'docx'].includes(ext)) type = 'doc';
+            if (['xls', 'xlsx'].includes(ext)) type = 'xls';
+
+            // Create Date
+            const d = new Date();
+            const months = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+            const dateStr = `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+
+            // Add to Mock Database
+            const newDoc = {
+                id: mockDocuments.length + 1,
+                title: title,
+                category: category,
+                date: dateStr,
+                size: (file.size / (1024 * 1024)).toFixed(1) + ' MB',
+                type: type
+            };
+
+            mockDocuments.push(newDoc);
+            
+            toggleUploadModal();
+            showToast('อัปโหลดเอกสารสำเร็จ!');
+            
+            // Set filter to the uploaded category to show it immediately
+            setCategory(category);
+        }
+
+        // --- UTILS ---
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').innerText = message;
+            
+            toast.classList.remove('hidden');
+            void toast.offsetWidth; // force reflow
+            toast.classList.remove('opacity-0');
+            toast.classList.add('opacity-100');
+            
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0');
+                setTimeout(() => toast.classList.add('hidden'), 300);
+            }, 3000);
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            renderDocuments();
+        });
+    </script>
+</body>
+</html>
